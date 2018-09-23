@@ -40,6 +40,7 @@ void DLL_Inject::Write_Process_Memory()
 	_NtReadVirtualMemory NtReadVirtualMemory = (_NtReadVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x003f);
 	_NtWriteVirtualMemory NtWriteVirtualMemory = (_NtWriteVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x0037);
 
+
 	HANDLE process_handle;
 	NTSTATUS status = ObOpenObjectByPointer(Process_Struct, OBJ_KERNEL_HANDLE, NULL, PROCESS_ALL_ACCESS,
 		NULL, KernelMode, &process_handle);
