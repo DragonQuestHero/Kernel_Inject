@@ -33,6 +33,7 @@ public:
 	~DLL_Inject() = default;
 public:
 	bool Register_Load_Image();
+	bool UnRegister_Load_Image();
 private:
 	static void Load_Image(
 		_In_ PUNICODE_STRING FullImageName,

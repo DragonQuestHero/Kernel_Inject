@@ -12,6 +12,16 @@ bool DLL_Inject::Register_Load_Image()
 	return false;
 }
 
+bool DLL_Inject::UnRegister_Load_Image()
+{
+	NTSTATUS status = PsRemoveLoadImageNotifyRoutine(DLL_Inject::Load_Image);
+	if (!NT_SUCCESS(status))
+	{
+		DbgPrint("PsRemoveLoadImageNotifyRoutine:%d", status);
+	}
+	return false;
+}
+
 char shellcode3[14] = { 0 };
 KEVENT wait_event;
 PEPROCESS Process_Struct;
@@ -29,16 +39,20 @@ void DLL_Inject::Write_Process_Memory()
 		"\x48\xB8\x11\x11\x11\x11\x11\x11\x11\x11" //mov rax, 0x1111111111111111
 		"\xFF\xD0" //call rax
 		"\x59\x5A\x58"//pop rax	pop rdx	 pop rcx 51
-		"\x4C\x8B\xD1"
+		"\x4C\x8B\xD1\xB8\xAC\x01\x00\x00\xF6\x04\x25\x08\x03\xFE\x7F\x01\x75\x03\x0F\x05\xC3";
+		/*"\x4C\x8B\xD1"
 		"\xB8\x7E\x01\x00\x00"
-		"\x0F\x05"
-		"\xC3"; 
+		"\x0F\x05"*/
 
 
 	Get_SSDT get_ssdt;
-	_NtProtectVirtualMemory NtProtectVirtualMemory = (_NtProtectVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x004d);
+	/*_NtProtectVirtualMemory NtProtectVirtualMemory = (_NtProtectVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x004d);
 	_NtReadVirtualMemory NtReadVirtualMemory = (_NtReadVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x003f);
-	_NtWriteVirtualMemory NtWriteVirtualMemory = (_NtWriteVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x0037);
+	_NtWriteVirtualMemory NtWriteVirtualMemory = (_NtWriteVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x0037);*/
+
+	_NtProtectVirtualMemory NtProtectVirtualMemory = (_NtProtectVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x0050);
+	_NtReadVirtualMemory NtReadVirtualMemory = (_NtReadVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x003f);
+	_NtWriteVirtualMemory NtWriteVirtualMemory = (_NtWriteVirtualMemory)get_ssdt.GetSSDTFuncCurAddrByIndex(0x003a);
 
 
 	HANDLE process_handle;
@@ -55,7 +69,7 @@ void DLL_Inject::Write_Process_Memory()
 	}
 
 
-	wchar_t shellcode_dll_name[] = L"C:\\d3d11hook.dll";
+	wchar_t shellcode_dll_name[] = L"C:\\EasyHK64.dll";
 	status = NtWriteVirtualMemory(process_handle, (void*)((ULONG_PTR)shellcode_addr+0x100), shellcode_dll_name, sizeof(shellcode_dll_name), NULL);
 	if (!NT_SUCCESS(status))
 	{
@@ -151,19 +165,20 @@ void DLL_Inject::Load_Image(
 		if (process.Get_Process_Image(process_handle, &temp_path))
 		{
 			UNICODE_STRING temp_path2;
-			RtlInitUnicodeString(&temp_path2, L"*CALC.EXE");//TSLGAME
+			RtlInitUnicodeString(&temp_path2, L"*TSLGAME.EXE");//TSLGAME
 			if (!FsRtlIsNameInExpression(&temp_path2, &temp_path, true, nullptr))
 			{
 				delete temp_path.Buffer;
 				return;
 			}
 
-			DbgBreakPoint();
+			//DbgBreakPoint();
 
 			KAPC_STATE apc;
 			KeStackAttachProcess(Process_Struct, &apc);
 			_This->LdrLoadDll_Func = BBGetModuleExport(ImageInfo->ImageBase, "LdrLoadDll");
 			_This->LdrGetProcedureAddressForCaller_Func = BBGetModuleExport(ImageInfo->ImageBase, "ZwTestAlert");
+			void *test = _This->LdrGetProcedureAddressForCaller_Func;
 			KeUnstackDetachProcess(&apc);
 
 			HANDLE thread_handle;
