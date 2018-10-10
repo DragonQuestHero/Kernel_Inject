@@ -69,7 +69,7 @@ void DLL_Inject::Write_Process_Memory()
 	}
 
 
-	wchar_t shellcode_dll_name[] = L"C:\\EasyHK64.dll";
+	wchar_t shellcode_dll_name[] = L"C:\\d3d11hook.dll";
 	status = NtWriteVirtualMemory(process_handle, (void*)((ULONG_PTR)shellcode_addr+0x100), shellcode_dll_name, sizeof(shellcode_dll_name), NULL);
 	if (!NT_SUCCESS(status))
 	{
@@ -142,6 +142,9 @@ void DLL_Inject::Load_Image(
 	_In_ PIMAGE_INFO ImageInfo
 	)
 {
+	DbgPrint("123");
+	return;
+
 	NTSTATUS status;
 	if (ProcessId == (HANDLE)0 || ProcessId == (HANDLE)4) return;
 	if (ImageInfo->SystemModeImage)return;
